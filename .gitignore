@@ -1,3 +1,5 @@
 .idea
 examples.py
-photos/*.*
+photos/
+todo.txt
+__pycache__/
