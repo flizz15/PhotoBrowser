@@ -48,6 +48,7 @@ def photo_browser():
         msg.page.small_images = natsorted(msg.page.small_images)
         msg.page.main_img.src = 'static/' + msg.page.small_images[0]
         msg.page.main_img_src = msg.page.main_img.src
+        msg.page.other_settings_container.show = True
 
         if msg.page.small_images_content_display_combobox.value == "text":
             if msg.page.pattern_recognize_checkbox.checked and msg.page.pattern_recognize_input.value:
@@ -79,16 +80,17 @@ def photo_browser():
             load_images(mode=2)
 
     def set_pattern_recognize(self, msg):
-        if self.checked:
-            msg.page.pattern_recognize_input.show = True
-            msg.page.pattern_refresh_button.show = True
-        else:
-            msg.page.pattern_recognize_input.show = False
-            msg.page.pattern_refresh_button.show = False
+        msg.page.pattern_recognize_input.show = not msg.page.pattern_recognize_input.show
+        msg.page.pattern_refresh_button.show = not msg.page.pattern_refresh_button.show
+        msg.page.pattern_recognize_input.value = ''
+        pattern_refresh(self, msg)
 
     def pattern_refresh(self, msg):
         msg.page.images_container.delete_components()
-        load_images(mode=2, pattern=self.pattern_recognize_input.value)
+        if wp.small_images_content_display_combobox.value == "text":
+            load_images(mode=2, pattern=msg.page.pattern_recognize_input.value)
+        else:
+            load_images(mode=1)
 
     wp = jp.WebPage()
     wp.body_classes = 'bg-gray-600'
@@ -112,33 +114,40 @@ def photo_browser():
 
     dropdown_menu = jp.Div(a=settings_div, classes=dropdown_menu_classes, style=dropdown_menu_style)
 
-    jp.Label(a=dropdown_menu, text='Dir for image src*')
-    images_dir_location_combobox = jp.Select(a=dropdown_menu, classes=default_combobox_classes)
+    images_dir_location_combobox_container = jp.Div(a=dropdown_menu)
 
-    jp.Label(a=dropdown_menu, text='Main img pos fixed?')
-    main_img_position_checkbox = jp.Input(a=dropdown_menu, type='checkbox', classes='m-1 form-checkbox')
+    jp.Label(a=images_dir_location_combobox_container, text='Dir for image src*')
+    images_dir_location_combobox = jp.Select(a=images_dir_location_combobox_container, classes=default_combobox_classes)
+
+    other_settings_container = jp.Div(a=dropdown_menu)
+    other_settings_container.show = False
+
+    jp.Label(a=other_settings_container, text='Main img pos fixed?')
+    main_img_position_checkbox = jp.Input(a=other_settings_container, type='checkbox', classes='m-1 form-checkbox')
     main_img_position_checkbox.on("change", set_main_img_position)
 
-    jp.Br(a=dropdown_menu)
+    jp.Br(a=other_settings_container)
 
-    jp.Label(a=dropdown_menu, text='Small images content display')
-    small_images_content_display_combobox = jp.Select(a=dropdown_menu, classes=default_combobox_classes)
-    jp.Option(a=small_images_content_display_combobox, value="photo", text='Photo (default)')
+    jp.Label(a=other_settings_container, text='Small images content display')
+    small_images_content_display_combobox = jp.Select(a=other_settings_container, classes=default_combobox_classes)
+    jp.Option(a=small_images_content_display_combobox, value="photo", text='Photo')
     jp.Option(a=small_images_content_display_combobox, value="text", text='Image name')
     small_images_content_display_combobox.on('change', change_small_images_content_display)
+    small_images_content_display_combobox.value = "photo"
 
-    jp.Label(a=dropdown_menu, text="Pattern recognize?")
-    pattern_recognize_checkbox = jp.Input(a=dropdown_menu, type='checkbox', classes='m-1 form-checkbox')
+    jp.Label(a=other_settings_container, text="Pattern recognize?")
+    pattern_recognize_checkbox = jp.Input(a=other_settings_container, type='checkbox', classes='m-1 form-checkbox')
     pattern_recognize_checkbox.on("change", set_pattern_recognize)
 
-    pattern_refresh_button = jp.Button(a=dropdown_menu)
+    pattern_refresh_button = jp.Button(a=other_settings_container)
     jp.I(a=pattern_refresh_button, classes='fas fa-sync')
     pattern_refresh_button.on('click', pattern_refresh)
     pattern_refresh_button.show = False
 
-    jp.Br(a=dropdown_menu)
+    jp.Br(a=other_settings_container)
 
-    pattern_recognize_input = jp.Input(a=dropdown_menu, classes=input_classes, placeholder='Type pattern here')
+    pattern_recognize_input = jp.Input(a=other_settings_container, classes=input_classes, placeholder='Type pattern '
+                                                                                                      'here')
     pattern_recognize_input.show = False
     pattern_refresh_button.pattern_recognize_input = pattern_recognize_input
 
@@ -148,10 +157,7 @@ def photo_browser():
     settings_button.on('click', toggle_show)
 
     for image_folder in small_images_folders:
-        if image_folder == small_images_folders[0]:
-            jp.Option(value=image_folder, text=image_folder, a=images_dir_location_combobox)
-        else:
-            jp.Option(value=image_folder, text=image_folder, a=images_dir_location_combobox)
+        jp.Option(value=image_folder, text=image_folder, a=images_dir_location_combobox)
 
     images_dir_location_combobox.on('change', change_images)
 
@@ -165,6 +171,7 @@ def photo_browser():
     wp.small_images_content_display_combobox = small_images_content_display_combobox
     wp.pattern_recognize_checkbox = pattern_recognize_checkbox
     wp.main_img_position_checkbox = main_img_position_checkbox
+    wp.other_settings_container = other_settings_container
 
     def load_images(mode=1, pattern=''):
         wp.all_image_containers = []
